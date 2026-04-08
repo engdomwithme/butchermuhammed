@@ -1,0 +1,37 @@
+name: Google Trends
+
+on:
+  schedule:
+    - cron: '49 20 * * *'  # 23:49 TR (UTC+3) — diğer workflow'lardan önce
+  workflow_dispatch:
+
+jobs:
+  trends:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Python kur
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Bağımlılıkları yükle
+        run: pip install pytrends "urllib3<2"
+
+      - name: Google Trends çek
+        run: python scripts/google_trends_cek.py
+        continue-on-error: true  # Rate limit durumunda workflow durmasın
+
+      - name: Değişiklikleri commit et
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main
+          git add mertdmg/
+          git diff --staged --quiet || git commit -m "data: $(date +%d%m%Y) google trends (pytrends)"
+          git push

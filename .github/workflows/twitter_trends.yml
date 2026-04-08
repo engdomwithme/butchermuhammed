@@ -1,0 +1,37 @@
+name: Twitter Türkiye Trendleri
+
+on:
+  schedule:
+    - cron: '57 20 * * *'  # Her gece 23:57 Türkiye saati (UTC+3)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  twitter-trends:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repoyu çek
+        uses: actions/checkout@v4
+
+      - name: Python kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Kütüphaneleri yükle
+        run: pip install -r requirements.txt
+
+      - name: Twitter trendleri çek
+        run: python twitter_trends.py
+
+      - name: Değişiklikleri kaydet ve push et
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add mertdmg/
+          git diff --staged --quiet || git commit -m "Twitter trendleri güncellendi: $(date +'%d.%m.%Y')"
+          git pull --rebase origin main
+          git push
